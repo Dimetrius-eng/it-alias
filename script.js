@@ -1,13 +1,9 @@
 // --- Глобальні змінні ---
 let allWordsByCategory = {}; 
 let availableWords = []; 
-
-// --- НОВЕ: Змінні для Звуку ---
-let isSoundEnabled = true; // За замовчуванням звук увімкнено
-const SOUND_STORAGE_KEY = 'itAliasSound'; // "Блокнот" для налаштувань звуку
-let sounds = {}; // Об'єкт для зберігання завантажених звуків
-
-// --- Стан гри (те, що ми будемо зберігати) ---
+let isSoundEnabled = true; 
+const SOUND_STORAGE_KEY = 'itAliasSound'; 
+let sounds = {}; 
 let gameState = {
   team1Score: 0,
   team2Score: 0,
@@ -22,8 +18,6 @@ let gameState = {
   selectedCategory: 'mixed',
   isRoundActive: false 
 };
-
-// --- Змінні для раунду (не зберігаються) ---
 let roundScore = 0;
 let timeLeft = 0;
 let timerInterval;
@@ -62,7 +56,7 @@ const backButtons = document.querySelectorAll('.btn-primary[data-target], .btn-t
 const pauseBtn = document.getElementById('pause-btn');       
 const resumeBtn = document.getElementById('resume-btn');     
 const quitToMenuBtn = document.getElementById('quit-to-menu-btn'); 
-const soundToggleBtn = document.getElementById('sound-toggle-btn'); // НОВА КНОПКА
+const soundToggleBtn = document.getElementById('sound-toggle-btn'); 
 const timerDisplay = document.getElementById('timer');
 const roundCounterDisplay = document.getElementById('round-counter'); 
 const wordDisplay = document.getElementById('word-display');
@@ -85,7 +79,6 @@ newGameMenuBtn.addEventListener('click', () => {
     showScreen(settingsScreen);
   }
 });
-
 rulesBtn.addEventListener('click', () => showScreen(rulesScreen));
 startBtn.addEventListener('click', setupNewGame);
 continueBtn.addEventListener('click', continueGame); 
@@ -109,7 +102,7 @@ backButtons.forEach(button => {
 pauseBtn.addEventListener('click', pauseGame);
 resumeBtn.addEventListener('click', resumeGame);
 quitToMenuBtn.addEventListener('click', quitGame); 
-soundToggleBtn.addEventListener('click', toggleSound); // НОВЕ
+soundToggleBtn.addEventListener('click', toggleSound); 
 timeSlider.oninput = function() { timeOutput.value = this.value; }
 roundsSlider.oninput = function() { roundsOutput.value = this.value; }
 
@@ -126,7 +119,7 @@ function loadGameState() {
 }
 function clearGameState() { localStorage.removeItem(GAME_STORAGE_KEY); }
 
-// --- НОВІ ФУНКЦІЇ: Логіка Звуку ---
+// --- Логіка Звуку ---
 function loadSounds() {
   try {
     sounds.correct = new Audio('sounds/correct.mp3');
@@ -145,6 +138,17 @@ function playSound(sound) {
     sound.play().catch(e => console.warn("Помилка програвання звуку:", e));
   }
 }
+
+/**
+ * НОВА ФУНКЦІЯ: Примусово зупиняє звук
+ */
+function stopSound(sound) {
+  if (sound) {
+    sound.pause();
+    sound.currentTime = 0;
+  }
+}
+
 function updateSoundIcon() {
   if (isSoundEnabled) {
     soundToggleBtn.textContent = '🔊';
@@ -156,6 +160,11 @@ function toggleSound() {
   isSoundEnabled = !isSoundEnabled;
   localStorage.setItem(SOUND_STORAGE_KEY, isSoundEnabled);
   updateSoundIcon();
+  
+  // Якщо користувач вимкнув звук, негайно зупиняємо тікання
+  if (!isSoundEnabled) {
+    stopSound(sounds.tick);
+  }
 }
 function loadSoundPreference() {
   const savedSoundSetting = localStorage.getItem(SOUND_STORAGE_KEY);
@@ -273,12 +282,9 @@ function startTimer() {
   timerInterval = setInterval(() => {
     timeLeft--;
     timerDisplay.textContent = timeLeft;
-    
-    // Звук "тікання"
     if (timeLeft <= 5 && timeLeft > 0) {
       playSound(sounds.tick);
     }
-
     if (timeLeft <= 0) {
       endRound(); 
     }
@@ -298,18 +304,19 @@ function nextWord() {
 }
 function handleCorrect() {
   roundScore++; 
-  playSound(sounds.correct); // Звук
+  playSound(sounds.correct); 
   nextWord();
 }
 function handleSkip() {
-  playSound(sounds.skip); // Звук
+  playSound(sounds.skip); 
   nextWord();
 }
 function endRound() {
   clearInterval(timerInterval); 
   gameState.isRoundActive = false; 
   
-  playSound(sounds.timesUp); // Звук
+  stopSound(sounds.tick); // <-- ВИПРАВЛЕННЯ 1
+  playSound(sounds.timesUp); 
 
   if (gameState.currentTeam === 1) gameState.team1Score += roundScore;
   else gameState.team2Score += roundScore;
@@ -354,13 +361,13 @@ function showWinner() {
   showScreen(gameOverScreen); 
 }
 function performReset() {
+  stopSound(sounds.tick); // <-- ВИПРАВЛЕННЯ 2 (Безпека)
+  
   gameState.isGameInProgress = false; 
   gameState.isRoundActive = false; 
   clearGameState(); 
-  
   scoreboard.style.display = 'none'; 
   continueBtn.style.display = 'none'; 
-  
   team1Input.value = "Команда 1";
   team2Input.value = "Команда 2";
   timeSlider.value = 60;
@@ -374,6 +381,7 @@ function performReset() {
 // --- Функції Паузи ---
 function pauseGame() {
   clearInterval(timerInterval); 
+  stopSound(sounds.tick); // <-- ВИПРАВЛЕННЯ 3
   showScreen(pauseScreen); 
 }
 function resumeGame() {
@@ -385,6 +393,8 @@ function quitGame() {
       return; 
   }
   clearInterval(timerInterval); 
+  stopSound(sounds.tick); // <-- ВИПРАВЛЕННЯ 4
+  
   gameState.isRoundActive = false; 
   saveGameState(); 
   scoreboard.style.display = 'none'; 
