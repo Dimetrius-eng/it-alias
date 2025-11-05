@@ -1,7 +1,6 @@
-// ВЕРСІЯ 20 - Додано звуки
-const CACHE_NAME = 'it-alias-v20-sounds';
+// ВЕРСІЯ 21 - Виправлення багу зі звуком тікання
+const CACHE_NAME = 'it-alias-v21-tick-sound-fix';
 
-// ЗМІНА ТУТ: Додано звуки у список
 const urlsToCache = [
   './',
   './index.html',
@@ -12,7 +11,6 @@ const urlsToCache = [
   './icons/icon-192x192.png',
   './icons/icon-512x512.png',
   'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap',
-  // Нова папка
   './sounds/correct.mp3',
   './sounds/skip.mp3',
   './sounds/times-up.mp3',
@@ -24,7 +22,7 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Відкрито кеш v20');
+        console.log('Відкрито кеш v21');
         const localUrls = urlsToCache.filter(url => !url.startsWith('http'));
         const externalUrls = urlsToCache.filter(url => url.startsWith('http'));
         
@@ -34,7 +32,7 @@ self.addEventListener('install', event => {
             return Promise.all(externalRequests.map(req => cache.add(req)));
           });
       })
-      .catch(err => console.error('Помилка cache.addAll у v20 (Можливо, відсутні звуки?):', err))
+      .catch(err => console.error('Помилка cache.addAll у v21:', err))
   );
 });
 
@@ -50,7 +48,7 @@ self.addEventListener('fetch', event => {
 
 // 3. Подія "activate" (оновлюємо "білий список")
 self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME]; // Залишити тільки v20
+  const cacheWhitelist = [CACHE_NAME]; // Залишити тільки v21
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
@@ -63,7 +61,7 @@ self.addEventListener('activate', event => {
       );
     })
     .then(() => {
-        console.log('Service Worker v20 активовано і перехоплює контроль!');
+        console.log('Service Worker v21 активовано і перехоплює контроль!');
         return self.clients.claim();
     })
   );
