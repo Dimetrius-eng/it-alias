@@ -243,7 +243,7 @@ function setupNewGame() {
   gameState.team1Score = 0;
   gameState.team2Score = 0;
   gameState.currentTeam = 1;
-  gameState.currentRound = 0;
+  gameState.currentRound = 1; // ЗМІНА: Починаємо з раунду 1
   gameState.lastRoundScore = 0;
   gameState.isGameInProgress = true; 
   gameState.isRoundActive = false; 
@@ -276,12 +276,17 @@ function startRound(isContinuation = false) {
   roundScore = 0; 
   timeLeft = gameState.roundTime;
   timerDisplay.textContent = timeLeft;
-  if (!isContinuation) {
-    if (gameState.currentTeam === 1) {
-      gameState.currentRound++;
-    }
-  }
+  
+  // ЗМІНА: Ми більше не збільшуємо раунд тут.
+  // if (!isContinuation) {
+  //   if (gameState.currentTeam === 1) {
+  //     gameState.currentRound++;
+  //   }
+  // }
+  
+  // Ми просто показуємо поточний раунд
   roundCounterDisplay.textContent = `${gameState.currentRound} / ${gameState.totalRounds}`;
+  
   if (gameState.currentTeam === 1) {
     document.getElementById('team1-display').classList.add('active-team');
     document.getElementById('team2-display').classList.remove('active-team');
@@ -360,7 +365,6 @@ function endRound() {
   clearInterval(timerInterval); 
   gameState.isRoundActive = false; 
   stopSound(sounds.tick); 
-  // ЗВУК "TIMESUP" ПЕРЕНЕСЕНО
   
   lastWordDisplay.innerHTML = wordDisplay.innerHTML;
   lastWordDisplay.style.fontSize = wordDisplay.style.fontSize;
@@ -368,22 +372,19 @@ function endRound() {
   showScreen(lastWordScreen);
 }
 
-// ЗМІНА ТУТ: Додано звук
 function handleLastWordCorrect() {
   roundScore++; 
   playSound(sounds.correct); 
   finishRoundLogic(); 
 }
 
-// ЗМІНА ТУТ: Додано звук
 function handleLastWordSkip() {
   playSound(sounds.skip); 
   finishRoundLogic(); 
 }
 
+// ЗМІНА ТУТ: Повністю нова логіка завершення раунду
 function finishRoundLogic() {
-  // ЗМІНА ТУТ: Звук "TimesUp" тепер лунає, 
-  // коли ми *дійсно* закінчуємо раунд
   playSound(sounds.timesUp); 
 
   if (gameState.currentTeam === 1) gameState.team1Score += roundScore;
@@ -391,16 +392,31 @@ function finishRoundLogic() {
   gameState.lastRoundScore = roundScore; 
   updateScoreboard();
 
-  if (gameState.currentTeam === 2 && gameState.currentRound >= gameState.totalRounds) {
-    gameState.isGameInProgress = false; 
-    showWinner();
-    clearGameState(); 
+  // Перевіряємо, чи це був хід Команди 2
+  if (gameState.currentTeam === 2) {
+    // Це був хід Команди 2. Раунд *дійсно* завершено.
+    if (gameState.currentRound >= gameState.totalRounds) {
+      // Це був ОСТАННІЙ раунд, гра завершена.
+      gameState.isGameInProgress = false; 
+      showWinner();
+      clearGameState(); 
+    } else {
+      // Це був не останній раунд. Збільшуємо лічильник
+      // і передаємо хід Команді 1
+      gameState.currentRound++;
+      gameState.currentTeam = 1;
+      showRoundSummary(false); 
+      saveGameState(); 
+    }
   } else {
-    gameState.currentTeam = (gameState.currentTeam === 1) ? 2 : 1;
+    // Це був хід Команди 1. Раунд ще не завершено.
+    // Просто передаємо хід Команді 2.
+    gameState.currentTeam = 2;
     showRoundSummary(false); 
     saveGameState(); 
   }
 }
+
 
 function showRoundSummary(isContinuation = false) {
   if (isContinuation) {
