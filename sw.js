@@ -1,5 +1,5 @@
-// ВЕРСІЯ 30 - Виправлення UI звуку + maxlength
-const CACHE_NAME = 'it-alias-v30-sound-ui-maxlength';
+// ВЕРСІЯ 37 - Виправлення багу "Продовжити"
+const CACHE_NAME = 'it-alias-v37-continue-bug-fix';
 
 const urlsToCache = [
   './',
@@ -22,7 +22,7 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Відкрито кеш v30');
+        console.log('Відкрито кеш v37');
         const localUrls = urlsToCache.filter(url => !url.startsWith('http'));
         const externalUrls = urlsToCache.filter(url => url.startsWith('http'));
         
@@ -32,11 +32,11 @@ self.addEventListener('install', event => {
             return Promise.all(externalRequests.map(req => cache.add(req)));
           });
       })
-      .catch(err => console.error('Помилка cache.addAll у v30:', err))
+      .catch(err => console.error('Помилка cache.addAll у v37:', err))
   );
 });
 
-// 2. Подія "fetch" (без змін)
+// 2. Подія "fetch"
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
@@ -46,9 +46,9 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// 3. Подія "activate" (оновлюємо "білий список")
+// 3. Подія "activate"
 self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME]; // Залишити тільки v30
+  const cacheWhitelist = [CACHE_NAME]; 
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
@@ -61,7 +61,7 @@ self.addEventListener('activate', event => {
       );
     })
     .then(() => {
-        console.log('Service Worker v30 активовано і перехоплює контроль!');
+        console.log('Service Worker v37 активовано і перехоплює контроль!');
         return self.clients.claim();
     })
   );
