@@ -197,7 +197,7 @@ async function initializeApp() {
     continueBtn.disabled = false;
   }
   
-  pauseBtn.style.display = 'none'; // Кнопка паузи схована
+  pauseBtn.style.display = 'none'; 
   
   showScreen(mainMenuScreen); 
   scoreboard.style.display = 'none';
@@ -240,9 +240,15 @@ function setupNewGame() {
   scoreboard.style.display = 'flex'; 
   startRound();
 }
+
+// ЗМІНА ТУТ
 function continueGame() {
+  // Нам не потрібно завантажувати стан, initializeApp() вже це зробив.
+  
   updateScoreboard();
   scoreboard.style.display = 'flex';
+  
+  // Оновлюємо налаштування (про всяк випадок)
   team1Input.value = gameState.team1Name;
   team2Input.value = gameState.team2Name;
   timeSlider.value = gameState.roundTime;
@@ -250,12 +256,19 @@ function continueGame() {
   roundsSlider.value = gameState.totalRounds;
   roundsOutput.value = gameState.totalRounds;
   categorySelect.value = gameState.selectedCategory; 
+  
+  // Вирішуємо, куди йти
   if (gameState.isRoundActive) {
-    startRound(true); 
+    // Якщо гравець оновив сторінку ПОСЕРЕД раунду,
+    // ми починаємо раунд заново (але не збільшуємо лічильник)
+    startRound(true); // true = це продовження
   } else {
-    showRoundSummary(true); 
+    // Якщо гравець вийшов МІЖ раундами (на екрані "Час вийшов!"),
+    // ми показуємо йому цей екран, але без напису "Ви заробили 0 балів"
+    showRoundSummary(true); // true = це продовження
   }
 }
+
 function startRound(isContinuation = false) {
   roundScore = 0; 
   timeLeft = gameState.roundTime;
@@ -339,6 +352,8 @@ function handleSkip() {
   playSound(sounds.skip); 
   nextWord();
 }
+
+// (Ми повертаємось до версії v30, тому "Останнього слова" НЕМАЄ)
 function endRound() {
   clearInterval(timerInterval); 
   gameState.isRoundActive = false; 
@@ -359,6 +374,7 @@ function endRound() {
     saveGameState(); 
   }
 }
+
 function showRoundSummary(isContinuation = false) {
   if (isContinuation) {
     turnEndTitle.style.display = 'none';
@@ -415,17 +431,37 @@ function resumeGame() {
   showScreen(gameScreen); 
   startTimer(); 
 }
+
+// ЗМІНА ТУТ: Повністю нова, виправлена логіка
 function quitGame() {
   if (!confirm("Вийти в головне меню? Ваш прогрес буде збережено.")) {
       return; 
   }
+  
+  // 1. Зупиняємо все, що пов'язано з раундом
   clearInterval(timerInterval); 
   stopSound(sounds.tick); 
   
+  // 2. Позначаємо, що ми БІЛЬШЕ НЕ в активному раунді
   gameState.isRoundActive = false; 
+  
+  // 3. Зберігаємо цей стан
   saveGameState(); 
+  
+  // 4. Ховаємо табло
   scoreboard.style.display = 'none'; 
-  initializeApp(); 
+  
+  // 5. Просто показуємо головне меню. НЕ викликаємо initializeApp()
+  showScreen(mainMenuScreen);
+  
+  // 6. Оновлюємо кнопку "Продовжити" вручну
+  // (Оскільки initializeApp не викликається, нам треба зробити це самим)
+  if (loadGameState() && gameState.isGameInProgress) {
+    continueBtn.style.display = 'block';
+    continueBtn.disabled = false;
+  } else {
+    continueBtn.style.display = 'none';
+  }
 }
 
 // --- ЗАПУСК ДОДАТКУ ---
